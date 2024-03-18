@@ -1,35 +1,35 @@
-﻿using e_shop.Models;
+﻿//----------------------------------------
+// Tarteeb School (c) All rights reserved |
+//----------------------------------------
+using e_shop.Models.Auth;
 namespace e_shop.Brokers.Storages
 {
-    internal class FileStorageBroker : IStorageBroker
+    internal class FileStorageBroker : IStorageBroker<Credential>
     {
         private const string FILEPATH = "../../../Assets/User.txt";
         public FileStorageBroker()
         {
             EnsureFileExists();
         }
-        public Credential AddCredential(Credential credential)
+        public Credential Add(Credential credential)
         {
             string userLine = $"{credential.UserName}-{credential.Password}\n";
             File.AppendAllText(FILEPATH, userLine);
             return credential;
         }
-        public Credential[] GetAllCredentials()
+        public List<Credential> GetAll()
         {
+            List<Credential> credentials = new List<Credential>();
             string[] credentialLines = File.ReadAllLines(FILEPATH);
-            int credentialLength = credentialLines.Length;
-            Credential[] credentials = new Credential[credentialLength];
-
-            for(int iteration = 0; iteration < credentialLength; iteration++)
+           
+            foreach(string credentialLine in credentialLines)
             {
-                string credentialLine = credentialLines[iteration];
                 string[] credentialProperties = credentialLine.Split("-");
-                Credential credential = new Credential
+                credentials.Add(new Credential()
                 {
                     UserName = credentialProperties[0],
                     Password = credentialProperties[1],
-                };
-                credentials[iteration] = credential;
+                });
             }
             return credentials;
         }
