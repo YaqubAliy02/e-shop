@@ -2,88 +2,109 @@
 // Tarteeb School (c) All rights reserved |
 //----------------------------------------
 using e_shop.Models.Auth;
+using e_shop.Models.Product;
 using e_shop.Services.Auth;
+using e_shop.Services.Order;
+using e_shop.Services.Storage;
 namespace UserManagement
 {
     class Program
     {
+        static ILogInService logInService = new LogInService();
+        static ICredentialService credentialService = new CredentialService();
+        static IProductService productService = new ProductService();
+        static IList<IShipping> shippings = new List<IShipping> { new Sea(), new Air(), new Ground() };
         static void Main(string[] args)
         {
-            LogInService logInService = new LogInService();
-            string userChoice;
-            int choice = 0;
-            do
+            Console.WriteLine("------------ Welcome to online shopping -----------");
+            Console.Write("Input your name: ");
+            string userNameInput = Console.ReadLine();
+            Console.Write("Input your password: ");
+            string passwordInput = Console.ReadLine(); 
+            Credential credential = GetCredential(userNameInput, passwordInput);
+
+            if(logInService.CheckCredentialLogIn(credential))
             {
-                Print();
-                Console.Write("Enter your choice: ");
-                userChoice = Console.ReadLine();
-                try
+                List<Product> selectedProducts = new List<Product>();
+                bool choosingProduct = true;
+                do
                 {
-                    choice = Convert.ToInt32(userChoice);
-                    switch (choice)
+                    PrintProduct();
+                    Console.Write("Select product: ");
+                    string input = Console.ReadLine();
+                    int selectedIndex = Convert.ToInt32(input);
+                    if (selectedIndex == 0)
                     {
-                        case 1:
-                            {
-                                Credential credential = new Credential();
-                                Console.Write("Enter your username: ");
-                                string newUserName = Console.ReadLine();
-                                credential.UserName = newUserName;
-                                Console.Write("Enter your password: ");
-                                string newUserPassword = Console.ReadLine();
-                                credential.Password = newUserPassword;
-                                logInService.AddCredential(credential);
-                            }
-                            break;
-
-                        case 2:
-                            {
-                                Credential credential = new Credential();
-                                Console.Write("Username: ");
-                                string userName = Console.ReadLine();
-                                credential.UserName = userName;
-                                Console.Write("Password: ");
-                                string password = Console.ReadLine();
-                                credential.Password = password;
-                                logInService.CheckCredentialLogIn(credential);
-                            }
-                            break;
-
-                        case 0:
-                            {
-                                Console.WriteLine("Exiting program...");
-                                break;
-                            }
-                        default:
-                            {
-                                throw new Exception("Invalid choice. Please enter a valid option.");
-                            }
+                        choosingProduct = false;
                     }
-                }
-                catch (FormatException)
-                {
-                    Console.WriteLine("Invalid input. Please enter a valid integer choice.");
-                    choice = -1;
-                }
-                catch (Exception exception)
-                {
-                    Console.WriteLine(exception.Message);
-                }
-                Console.Write("Do you want to continue yes(y) or no(n): ");
-                string continueChoice = Console.ReadLine();
+                    else
+                    {
+                        Console.Write("Enter weight: ");
+                        string inputWeight = Console.ReadLine();
+                        double weight = Convert.ToDouble(inputWeight);
+                        productService.GetProducts()[selectedIndex-1].Weight = weight;
+                        selectedProducts.Add(productService.GetProducts()[selectedIndex - 1]);
+                        Console.Clear();
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        PrintSuccessfullMessage("Successfully added ");
+                        Console.ResetColor();
+                    }
+                } while (choosingProduct);
 
-                if (continueChoice.ToLower() != "y")
-                {
-                    Console.WriteLine("Thank you for using our console app");
-                    break;
-                }
-
-            } while (choice != 0);
+                Console.Clear();
+                OrderService order = new OrderService(selectedProducts);
+                PrintShippingTypes();
+                Console.Write("Select shipping type: ");
+                string inputShipping = Console.ReadLine();
+                int selectedShippingType = Convert.ToInt32(inputShipping);
+                order.SetShippingType(shippings[selectedShippingType]);
+                Console.Clear();
+                PrintSuccessfullMessage("Shipping successfully added");
+                PrintOrderDetails(order);
+            }
+            else
+            {
+                credentialService.AddCredential(credential);
+            }
         }
-        static void Print()
+        static void PrintSuccessfullMessage(string message)
         {
-            Console.WriteLine("1. Sign Up");
-            Console.WriteLine("2. Log In");
-            Console.WriteLine("0. Exit");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine(message);
+            Console.ResetColor();
+        }
+        static void PrintProduct()
+        {
+            Console.WriteLine("\t 0. Order create");
+            int index = 1;
+            foreach(var item in productService.GetProducts())
+            {
+                Console.WriteLine(index++ + "." + item.Name);
+            }
+        }
+
+        static void PrintShippingTypes()
+        {
+            int index = 0; 
+            foreach (var item in shippings)
+            {
+                Console.WriteLine(index++ + "." + item.GetType().Name);
+            }
+        }
+
+        static Credential GetCredential(string userName, string password)
+        {
+            return new Credential()
+            {
+                UserName = userName,
+                Password = password
+            };
+        }
+        static void PrintOrderDetails(OrderService order)
+        {
+            Console.WriteLine($"Shipping cost: {order.GetShippingCost()}");
+            Console.WriteLine($"Shipping weight: {order.GetTotalWeight()}");
+            Console.WriteLine($"Shipping date: {order.GetShippingDate()}");
         }
 
     }
