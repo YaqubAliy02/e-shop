@@ -1,4 +1,6 @@
-﻿
+﻿//----------------------------------------
+// Tarteeb School (c) All rights reserved |
+//----------------------------------------
 namespace e_shop.Brokers.Loggings
 {
     internal class LoggingBroker : ILoggingBroker

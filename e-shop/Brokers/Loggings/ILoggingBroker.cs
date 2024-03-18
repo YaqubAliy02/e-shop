@@ -1,4 +1,7 @@
-﻿namespace e_shop.Brokers.Loggings
+﻿//----------------------------------------
+// Tarteeb School (c) All rights reserved |
+//----------------------------------------
+namespace e_shop.Brokers.Loggings
 {
     internal interface ILoggingBroker
     {
